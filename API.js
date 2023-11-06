@@ -39,10 +39,10 @@ app.get('/api/list', async (req, res) => {
 app.post('/api/add', async (req, res) => {
   const { groupName, chatID } = req.body;
 
-  // 檢查資料庫中是否已存在具有相同 name 或 chatid 的記錄
+  // 檢查資料庫中是否已存在具有相同 groupName 或 chatID 的記錄
   const existingItem = await Item.findOne({ $or: [{ groupName }, { chatID }] });
   if (existingItem) {
-    return res.status(400).json({ error: 400, message: '已存在相同名稱或描述的項目。' });
+    return res.status(400).json({ error: 400, message: '已存在相同名稱或chatID。' });
   }
 
   // 如果不存在重複記錄，保存新項目到資料庫
@@ -60,12 +60,12 @@ app.post('/api/delete', async (req, res) => {
   const chatID = req.body.chatID;
 
   try {
-    // 在資料庫中查找並刪除指定chatid的文件
+    // 在資料庫中查找並刪除指定chatID的文件
     const deletedItem = await Item.findOneAndDelete({ chatID: chatID });
 
-    // 如果找不到指定chatid的文件，返回404 Not Found
+    // 如果找不到指定chatID的文件，返回404 Not Found
     if (!deletedItem) {
-      return res.status(404).json({ error: '指定的chatid不存在' });
+      return res.status(404).json({ error: '指定的chatID不存在' });
     }
 
     res.json({ message: '已成功刪除', deletedItem });
