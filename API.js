@@ -6,7 +6,7 @@ const app = express();
 const PORT = 3000;
 
 // 連接到MongoDB資料庫
-mongoose.connect('mongodb://localhost:27017/database', {
+mongoose.connect('mongodb://127.0.0.1:27017/database', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
