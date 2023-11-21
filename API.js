@@ -23,6 +23,18 @@ const ItemSchema = new mongoose.Schema({
 
 const Item = mongoose.model('Item', ItemSchema);
 
+
+const UserSchema = new mongoose.Schema({
+  agentCode: String,
+  userCode: String,
+  createdtime: {
+    type: Date,
+    default: Date.now
+  }
+}, {versionKey: false});
+
+const User = mongoose.model('User', UserSchema);
+
 // 使用body-parser解析POST請求的JSON數據
 app.use(bodyParser.json());
 
@@ -49,7 +61,7 @@ app.post('/api/add', async (req, res) => {
   const item = new Item({ groupName, chatID });
   try {
     await item.save();
-    res.json(item);
+    res.json({ message: '已成功添加', item });
   } catch (err) {
     res.status(500).json({ error: 500, message: '伺服器內部錯誤：' + err.message });
   }
@@ -69,6 +81,59 @@ app.post('/api/delete', async (req, res) => {
     }
 
     res.json({ message: '已成功刪除', deletedItem });
+  } catch (err) {
+    // 如果刪除過程中出現錯誤，返回500 Internal Server Error
+    res.status(500).json({ error: '無法刪除文件', details: err.message });
+  }
+});
+
+
+
+
+
+
+app.get('/api/userlist', async (req, res) => {
+  try {
+    const Users = await User.find();
+    res.json(Users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/adduser', async (req, res) => {
+  const { agentCode, userCode } = req.body;
+
+  // 檢查資料庫中是否已存在具有相同 groupName 或 chatID 的記錄
+  const existingUser = await User.findOne({ $and: [{ agentCode }, { userCode }] });
+  if (existingUser) {
+    return res.status(400).json({ error: 400, message: '已存在相同代理之用戶名。' });
+  }
+
+  // 如果不存在重複記錄，保存新項目到資料庫
+  const user = new User({ agentCode, userCode });
+  try {
+    await user.save();
+    res.json({ message: '已成功添加', user });
+  } catch (err) {
+    res.status(500).json({ error: 500, message: '伺服器內部錯誤：' + err.message });
+  }
+});
+
+// 定義DELETE請求的API路由
+app.post('/api/deleteuser', async (req, res) => {
+  const userCode = req.body.userCode;
+
+  try {
+    // 在資料庫中查找並刪除指定chatID的文件
+    const deletedUser = await User.findOneAndDelete({ userCode: userCode });
+
+    // 如果找不到指定chatID的文件，返回404 Not Found
+    if (!deletedUser) {
+      return res.status(404).json({ error: '指定的userCode不存在' });
+    }
+
+    res.json({ message: '已成功刪除', deletedUser });
   } catch (err) {
     // 如果刪除過程中出現錯誤，返回500 Internal Server Error
     res.status(500).json({ error: '無法刪除文件', details: err.message });
