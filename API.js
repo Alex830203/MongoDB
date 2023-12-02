@@ -54,7 +54,7 @@ app.post('/api/add', async (req, res) => {
   // 檢查資料庫中是否已存在具有相同 groupName 或 chatID 的記錄
   const existingItem = await Item.findOne({ $or: [{ groupName }, { chatID }] });
   if (existingItem) {
-    return res.status(400).json({ error: 400, message: '已存在相同名稱或chatID。' });
+    return res.status(400).json({ error: 400, message: '已存在相同名稱或chatID' });
   }
 
   // 如果不存在重複記錄，保存新項目到資料庫
@@ -107,7 +107,7 @@ app.post('/api/adduser', async (req, res) => {
   // 檢查資料庫中是否已存在具有相同 groupName 或 chatID 的記錄
   const existingUser = await User.findOne({ $and: [{ agentCode }, { userCode }] });
   if (existingUser) {
-    return res.status(400).json({ error: 400, message: '已存在相同代理之用戶名。' });
+    return res.status(400).json({ error: 400, message: '已存在相同代理之用戶名' });
   }
 
   // 如果不存在重複記錄，保存新項目到資料庫
@@ -130,7 +130,7 @@ app.post('/api/deleteuser', async (req, res) => {
 
     // 如果找不到指定chatID的文件，返回404 Not Found
     if (!deletedUser) {
-      return res.status(404).json({ error: '指定的userCode不存在' });
+      return res.status(404).json({ error: 400, message: '指定的userCode不存在' });
     }
 
     res.json({ message: '已成功刪除', deletedUser });
