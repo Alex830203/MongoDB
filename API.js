@@ -6,10 +6,11 @@ const app = express();
 const PORT = 3000;
 
 // 連接到MongoDB資料庫
-mongoose.connect('mongodb://127.0.0.1:27017/database', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+// 使用環境變量存儲敏感信息
+const dbURI = process.env.MONGO_URI || 'mongodb+srv://alex:0921988551@alex-db.gchr1ir.mongodb.net/';
+mongoose.connect(dbURI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('Could not connect to MongoDB', err));
 
 // 定義MongoDB模型（Schema）
 const ItemSchema = new mongoose.Schema({
@@ -22,7 +23,6 @@ const ItemSchema = new mongoose.Schema({
 }, {versionKey: false});
 
 const Item = mongoose.model('Item', ItemSchema);
-
 
 const UserSchema = new mongoose.Schema({
   agentCode: String,
@@ -87,11 +87,6 @@ app.post('/api/delete', async (req, res) => {
   }
 });
 
-
-
-
-
-
 app.get('/api/userlist', async (req, res) => {
   try {
     const Users = await User.find();
@@ -139,7 +134,6 @@ app.post('/api/deleteuser', async (req, res) => {
     res.status(500).json({ error: '無法刪除文件', details: err.message });
   }
 });
-
 
 // 啟動API服務
 app.listen(PORT, () => {
