@@ -1,9 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const app = express();
 const PORT = 3000;
+
+// 使用CORS中間件
+app.use(cors());
 
 // 連接到MongoDB資料庫
 // 使用環境變量存儲敏感信息
@@ -34,6 +38,17 @@ const UserSchema = new mongoose.Schema({
 }, {versionKey: false});
 
 const User = mongoose.model('User', UserSchema);
+
+const FoodSchema = new mongoose.Schema({
+  date: String,
+  name: String,
+  createdtime: {
+    type: Date,
+    default: Date.now
+  }
+}, {versionKey: false});
+
+const Food = mongoose.model('Food', FoodSchema);
 
 // 使用body-parser解析POST請求的JSON數據
 app.use(bodyParser.json());
@@ -129,6 +144,54 @@ app.post('/api/deleteuser', async (req, res) => {
     }
 
     res.json({ message: '已成功刪除', deletedUser });
+  } catch (err) {
+    // 如果刪除過程中出現錯誤，返回500 Internal Server Error
+    res.status(500).json({ error: '無法刪除文件', details: err.message });
+  }
+});
+
+app.get('/api/foodlist', async (req, res) => {
+  try {
+    const Foods = await Food.find();
+    res.json(Foods);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/addfood', async (req, res) => {
+  const { date, name } = req.body;
+
+  // 檢查資料庫中是否已存在具有相同 date 或 name 的記錄
+  const existingFood = await Food.findOne({ $and: [{ date }, { name }] });
+  if (existingFood) {
+    return res.status(400).json({ error: 400, message: '已存在相同日期之店家' });
+  }
+
+  // 如果不存在重複記錄，保存新項目到資料庫
+  const food = new Food({ date, name });
+  try {
+    await food.save();
+    res.json({ message: '已成功添加', food });
+  } catch (err) {
+    res.status(500).json({ error: 500, message: '伺服器內部錯誤：' + err.message });
+  }
+});
+
+// 定義DELETE請求的API路由
+app.post('/api/deletefood', async (req, res) => {
+  const date = req.body.date;
+
+  try {
+    // 在資料庫中查找並刪除指定date的文件
+    const deletedFood = await Food.deleteMany({ date: date });
+
+    // 如果找不到指定chatID的文件，返回404 Not Found
+    if (!deletedFood) {
+      return res.status(404).json({ error: 400, message: '指定的date不存在' });
+    }
+
+    res.json({ message: '已成功刪除', deletedFood });
   } catch (err) {
     // 如果刪除過程中出現錯誤，返回500 Internal Server Error
     res.status(500).json({ error: '無法刪除文件', details: err.message });
