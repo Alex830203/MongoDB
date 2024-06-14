@@ -180,15 +180,15 @@ app.post('/api/addfood', async (req, res) => {
 
 // 定義DELETE請求的API路由
 app.post('/api/deletefood', async (req, res) => {
-  const date = req.body.date;
+  const { date, name } = req.body;
 
   try {
-    // 在資料庫中查找並刪除指定date的文件
-    const deletedFood = await Food.deleteMany({ date: date });
+    // 在資料庫中查找並刪除指定date和name的文件
+    const deletedFood = await Food.findOneAndDelete({ date: date, name: name });
 
-    // 如果找不到指定chatID的文件，返回404 Not Found
+    // 如果找不到指定條件的文件，返回404 Not Found
     if (!deletedFood) {
-      return res.status(404).json({ error: 400, message: '指定的date不存在' });
+      return res.status(404).json({ error: 400, message: '指定的date和name不存在' });
     }
 
     res.json({ message: '已成功刪除', deletedFood });
@@ -197,6 +197,7 @@ app.post('/api/deletefood', async (req, res) => {
     res.status(500).json({ error: '無法刪除文件', details: err.message });
   }
 });
+
 
 // 啟動API服務
 app.listen(PORT, () => {
