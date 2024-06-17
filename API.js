@@ -42,6 +42,7 @@ const User = mongoose.model('User', UserSchema);
 const FoodSchema = new mongoose.Schema({
   date: String,
   name: String,
+  type: String,
   createdtime: {
     type: Date,
     default: Date.now
@@ -160,7 +161,7 @@ app.get('/api/foodlist', async (req, res) => {
 });
 
 app.post('/api/addfood', async (req, res) => {
-  const { date, name } = req.body;
+  const { date, name, type } = req.body;
 
   // 檢查資料庫中是否已存在具有相同 date 或 name 的記錄
   const existingFood = await Food.findOne({ $and: [{ date }, { name }] });
@@ -169,7 +170,7 @@ app.post('/api/addfood', async (req, res) => {
   }
 
   // 如果不存在重複記錄，保存新項目到資料庫
-  const food = new Food({ date, name });
+  const food = new Food({ date, name ,type});
   try {
     await food.save();
     res.json({ message: '已成功添加', food });
