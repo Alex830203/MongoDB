@@ -2,6 +2,12 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const crypto = require('crypto');
+
+// Helper function to generate a random accessToken
+function generateAccessToken() {
+  return crypto.randomBytes(24).toString('hex');
+}
 
 const app = express();
 const PORT = 3000;
@@ -29,8 +35,17 @@ const ItemSchema = new mongoose.Schema({
 const Item = mongoose.model('Item', ItemSchema);
 
 const UserSchema = new mongoose.Schema({
-  agentCode: String,
-  userCode: String,
+  username: String,
+  password: String,
+  accessToken: String,
+  logintime: {
+    type: Date,
+    default: Date.now
+  },
+  type: {
+    type: String,
+    default: 'player'
+  },
   createdtime: {
     type: Date,
     default: Date.now
@@ -150,6 +165,96 @@ app.post('/api/deleteuser', async (req, res) => {
     res.status(500).json({ error: '無法刪除文件', details: err.message });
   }
 });
+
+// 新增 遊戲登入 路由
+app.post('/api/login', async (req, res) => {
+  const { cmd, eventType, channelId, username, password, timestamp, ip, signature } = req.body;
+
+  if (cmd == 'UserInfo') {
+    return res.status(200).json({ status: 200, message: '水水水' });
+  }
+  
+  if (cmd !== 'RegisterOrLoginReq') {
+    return res.status(400).json({ status: 400, message: 'Invalid command' });
+  }
+
+  try {
+    // 查找用戶
+    let user = await User.findOne({ username });
+
+    if (!user) {
+      // 如果用戶不存在，創建新用戶
+      const accessToken = generateAccessToken();
+      user = new User({
+        username,
+        password,
+        logintime: new Date(timestamp * 1000),
+        type: 'player',
+        accessToken
+      });
+      await user.save();
+    } else {
+      // 如果用戶存在，檢查密碼
+      if (user.password !== password) {
+        return res.status(401).json({ status: 401, message: 'Invalid password' });
+      }
+
+      // 更新登錄時間和accessToken
+      user.logintime = new Date(timestamp * 1000);
+      user.accessToken = generateAccessToken();
+      await user.save();
+    }
+
+    // 返回響應
+    res.json({
+      accessToken: user.accessToken,
+      subChannelId: 0,
+      username,
+      status: 200
+    });
+  } catch (err) {
+    res.status(500).json({ status: 500, message: 'Internal server error', error: err.message });
+  }
+});
+
+// 新增 後台登入 路由
+app.post('/api/adminlogin', async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    // 查找用戶
+    let user = await User.findOne({ username });
+
+    if (!user) {
+      return res.status(404).json({ status: 404, message: 'User not found' });
+    }
+
+    // 檢查密碼
+    if (user.password !== password) {
+      return res.status(401).json({ status: 401, message: 'Invalid password' });
+    }
+
+    // 檢查用戶類型
+    if (user.type !== 'admin') {
+      return res.status(403).json({ status: 403, message: 'Access denied' });
+    }
+
+    // 更新accessToken
+    user.accessToken = generateAccessToken();
+    await user.save();
+
+    // 返回響應
+    res.json({
+      accessToken: user.accessToken,
+      username: user.username,
+      type: user.type,  // 使用 user.type
+      status: 200
+    });
+  } catch (err) {
+    res.status(500).json({ status: 500, message: 'Internal server error', error: err.message });
+  }
+});
+
 
 app.get('/api/foodlist', async (req, res) => {
   try {
