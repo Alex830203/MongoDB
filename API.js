@@ -168,7 +168,7 @@ app.post('/api/deleteuser', async (req, res) => {
 
 // 新增 遊戲登入 路由
 app.post('/api/login', async (req, res) => {
-  const { cmd, eventType, channelId, username, password, timestamp, ip, signature } = req.body;
+  const { cmd, eventType, channelId, username, password, accessToken, timestamp, ip, signature } = req.body;
 
   if (cmd == 'UserInfo') {
     return res.status(200).json({ status: 200, message: '水水水' });
@@ -195,7 +195,7 @@ app.post('/api/login', async (req, res) => {
       await user.save();
     } else {
       // 如果用戶存在，檢查密碼
-      if (user.password !== password) {
+      if (user.password !== password && user.password !== accessToken) {
         return res.status(401).json({ status: 401, message: 'Invalid password' });
       }
 
