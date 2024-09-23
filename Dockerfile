@@ -17,7 +17,7 @@ COPY . .
 EXPOSE 3000
 
 # 設置環境變量
-ENV MONGO_URI=mongodb+srv://alex:0921988551@alex-db.gchr1ir.mongodb.net/
+ENV MONGO_URI=mongodb+srv://alex:0921988551@alex-db.gchr1ir.mongodb.net/?retryWrites=true&w=majority&appName=ALEX-DB
 
 # 定義啟動命令
 CMD [ "node", "API.js" ]

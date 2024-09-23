@@ -17,7 +17,7 @@ app.use(cors());
 
 // 連接到MongoDB資料庫
 // 使用環境變量存儲敏感信息
-const dbURI = process.env.MONGO_URI || 'mongodb+srv://alex:0921988551@alex-db.gchr1ir.mongodb.net/';
+const dbURI = process.env.MONGO_URI || 'mongodb+srv://alex:0921988551@alex-db.gchr1ir.mongodb.net/?retryWrites=true&w=majority&appName=ALEX-DB';
 mongoose.connect(dbURI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Could not connect to MongoDB', err));
