@@ -66,6 +66,17 @@ const FoodSchema = new mongoose.Schema({
 
 const Food = mongoose.model('Food', FoodSchema);
 
+const LuzhuSchema = new mongoose.Schema({
+  bettime: String,
+  result: String,
+  createdtime: {
+    type: Date,
+    default: Date.now
+  }
+}, {versionKey: false});
+
+const Luzhu = mongoose.model('Luzhu', LuzhuSchema);
+
 // 使用body-parser解析POST請求的JSON數據
 app.use(bodyParser.json());
 
@@ -304,6 +315,35 @@ app.post('/api/deletefood', async (req, res) => {
   }
 });
 
+app.get('/api/luzhulist', async (req, res) => {
+  try {
+    const Luzhus = await Luzhu.find();
+    res.json(Luzhus);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/addluzhu', async (req, res) => {
+  const { bettime, result } = req.body;
+
+  try {
+    // 檢查資料庫中已經有多少筆資料
+    const count = await Luzhu.countDocuments();
+
+    // 如果資料超過100筆，刪除最舊的資料
+    if (count >= 100) {
+      await Luzhu.findOneAndDelete({}, { sort: { createdtime: 1 } });
+    }
+
+    // 保存新項目到資料庫
+    const luzhu = new Luzhu({ bettime, result });
+    await luzhu.save();
+    res.json({ message: '已成功添加', luzhu });
+  } catch (err) {
+    res.status(500).json({ error: 500, message: '伺服器內部錯誤：' + err.message });
+  }
+});
 
 // 啟動API服務
 app.listen(PORT, () => {
