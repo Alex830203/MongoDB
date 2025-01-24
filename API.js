@@ -372,9 +372,9 @@ app.post('/api/addrank', async (req, res) => {
     // 檢查資料庫中已經有多少筆資料
     const count = await Rank.countDocuments();
 
-    // 如果資料超過10筆，刪除最舊的資料
+    // 如果資料超過10筆，刪除 money 最小的資料
     if (count >= 10) {
-      await Rank.findOneAndDelete({}, { sort: { createdtime: 1 } });
+      await Rank.findOneAndDelete({}, { sort: { money: 1 } });
     }
 
     // 保存新項目到資料庫
