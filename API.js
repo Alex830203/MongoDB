@@ -77,6 +77,17 @@ const LuzhuSchema = new mongoose.Schema({
 
 const Luzhu = mongoose.model('Luzhu', LuzhuSchema);
 
+const RankSchema = new mongoose.Schema({
+  username: String,
+  money: Number,
+  createdtime: {
+    type: Date,
+    default: Date.now
+  }
+}, {versionKey: false});
+
+const Rank = mongoose.model('Rank', RankSchema);
+
 // 使用body-parser解析POST請求的JSON數據
 app.use(bodyParser.json());
 
@@ -340,6 +351,36 @@ app.post('/api/addluzhu', async (req, res) => {
     const luzhu = new Luzhu({ bettime, result });
     await luzhu.save();
     res.json({ message: '已成功添加', luzhu });
+  } catch (err) {
+    res.status(500).json({ error: 500, message: '伺服器內部錯誤：' + err.message });
+  }
+});
+
+app.get('/api/ranklist', async (req, res) => {
+  try {
+    const Ranks = await Rank.find();
+    res.json(Ranks);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/addrank', async (req, res) => {
+  const { username, money } = req.body;
+
+  try {
+    // 檢查資料庫中已經有多少筆資料
+    const count = await Rank.countDocuments();
+
+    // 如果資料超過10筆，刪除最舊的資料
+    if (count >= 10) {
+      await Rank.findOneAndDelete({}, { sort: { createdtime: 1 } });
+    }
+
+    // 保存新項目到資料庫
+    const rank = new Rank({ username, money });
+    await rank.save();
+    res.json({ message: '已成功添加', rank });
   } catch (err) {
     res.status(500).json({ error: 500, message: '伺服器內部錯誤：' + err.message });
   }
